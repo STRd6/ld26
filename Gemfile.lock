@@ -1,0 +1,64 @@
+PATH
+  remote: ../bjork
+  specs:
+    bjork (0.1.1)
+      coffee-script
+      haml
+      jquery-source (= 1.9.1.1)
+      shank
+      sinatra
+      sprockets
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    coffee-script (2.2.0)
+      coffee-script-source
+      execjs
+    coffee-script-source (1.6.2)
+    cornerstone-source (0.1.12)
+      sprockets
+    daemons (1.1.9)
+    eventmachine (1.0.3)
+    execjs (1.4.0)
+      multi_json (~> 1.0)
+    haml (4.0.2)
+      tilt
+    hike (1.2.2)
+    jquery-source (1.9.1.1)
+    multi_json (1.7.2)
+    pixie_dust (0.1.0)
+      coffee-script
+      cornerstone-source
+      sprockets
+    rack (1.5.2)
+    rack-protection (1.5.0)
+      rack
+    rake (10.0.4)
+    shank (0.0.7)
+      coffee-script
+      pixie_dust
+      sprockets
+    sinatra (1.4.2)
+      rack (~> 1.5, >= 1.5.2)
+      rack-protection (~> 1.4)
+      tilt (~> 1.3, >= 1.3.4)
+    sprockets (2.9.3)
+      hike (~> 1.2)
+      multi_json (~> 1.0)
+      rack (~> 1.0)
+      tilt (~> 1.1, != 1.3.0)
+    thin (1.5.1)
+      daemons (>= 1.0.9)
+      eventmachine (>= 0.12.6)
+      rack (>= 1.0.0)
+    tilt (1.3.7)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  bjork!
+  rake
+  sinatra
+  thin
