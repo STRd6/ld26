@@ -66,36 +66,6 @@ Seed = (I={}) ->
     else
       antagonism(other, self)
 
-  gradient = (context) ->
-    t = I.radius / 3
-    radgrad = context.createRadialGradient(-t, -t, 0, 0, 0, I.radius)
-
-    a = 0.75
-    edgeAlpha = 1
-
-    [r, g, b] = I.color.channels()
-
-    radgrad.addColorStop(0, "rgba(255, 255, 255, #{a})")
-
-    [r1, g1, b1] = [r, g, b].map (n) ->
-      (n * 11 / 7).clamp(0, 255).floor()
-
-    radgrad.addColorStop(0.5, "rgba(#{r1}, #{g1}, #{b1}, #{a})")
-
-    # radgrad.addColorStop(0.5, "rgba(#{r}, #{g}, #{b}, #{a})")
-
-    [r, g, b] = [r, g, b].map (n) ->
-      (n * 7/8).floor()
-
-    radgrad.addColorStop(0.9, "rgba(#{r}, #{g}, #{b}, #{a})")
-
-    [r, g, b] = [r, g, b].map (n) ->
-      (n * 7/8).floor()
-
-    radgrad.addColorStop(1, "rgba(#{r}, #{g}, #{b}, #{edgeAlpha})")
-
-    radgrad
-
   merge = (other, self) ->
     self.destroy()
     other.destroy()
@@ -103,7 +73,12 @@ Seed = (I={}) ->
     x = self.colorNum()
     y = other.colorNum()
 
-    p = Point.centroid(self.position(), other.position())
+    # p = Point.centroid(self.position(), other.position())
+
+    if self.radius() > other.radius()
+      p = self.position()
+    else
+      p = other.position()
 
     n = x | y
 
@@ -135,9 +110,9 @@ Seed = (I={}) ->
     n = self.colorNum()
     switch n
       when 0
-        I.radius -= 2 * elapsedTime
+        I.radius -= 3 * elapsedTime
 
-        engine.first("Universe").expand(elapsedTime)
+        engine.first("Universe").expand(3 * elapsedTime)
 
       when 1 # Red
         I.radius += 10 * elapsedTime
@@ -145,7 +120,8 @@ Seed = (I={}) ->
         if I.radius >= 100
           engine.camera().shake()
 
-          Sound.play "explosion0"
+          # Sound.play "explosion0"
+
           3.times addPickup
           self.destroy()
       when 2 # Yellow
@@ -165,6 +141,8 @@ Seed = (I={}) ->
 
         I.radius -= 2 * elapsedTime
       when 7 # black
+        engine.first("Universe").expand(-elapsedTime)
+
         I.radius -= elapsedTime
 
     seedCollide (other, self) ->
@@ -187,7 +165,9 @@ Seed = (I={}) ->
       x: 0
       y: 0
       radius: I.radius
-      color: gradient(canvas.context())
+      color: Seed.gradient(I.radius, I.color, canvas.context())
+
+  self.attrReader "radius"
 
   return self
 
@@ -205,17 +185,50 @@ Seed.ColorNums = [
 Seed.Colors = [
   "white"
   "red"
-  "yellow"
+  [224, 224, 0]
   "orange"
   "blue"
   "purple"
   "green"
   "black"
 ].map (name) ->
-  Color(name)
+  if name.isString?()
+    Color(name)
+  else
+    Color.apply(null, name)
 
 Seed.Primaries = [
   Seed.Colors[1]
   Seed.Colors[2]
   Seed.Colors[4]
 ]
+
+Seed.gradient = (radius, color, context) ->
+  t = radius / 3
+  radgrad = context.createRadialGradient(-t, -t, 0, 0, 0, radius)
+
+  a = 0.75
+  edgeAlpha = 1
+
+  [r, g, b] = color.channels()
+
+  radgrad.addColorStop(0, "rgba(255, 255, 255, #{a})")
+
+  [r1, g1, b1] = [r, g, b].map (n) ->
+    (n * 11 / 7).clamp(0, 255).floor()
+
+  radgrad.addColorStop(0.5, "rgba(#{r1}, #{g1}, #{b1}, #{a})")
+
+  # radgrad.addColorStop(0.5, "rgba(#{r}, #{g}, #{b}, #{a})")
+
+  [r, g, b] = [r, g, b].map (n) ->
+    (n * 7/8).floor()
+
+  radgrad.addColorStop(0.9, "rgba(#{r}, #{g}, #{b}, #{a})")
+
+  [r, g, b] = [r, g, b].map (n) ->
+    (n * 7/8).floor()
+
+  radgrad.addColorStop(1, "rgba(#{r}, #{g}, #{b}, #{edgeAlpha})")
+
+  radgrad
