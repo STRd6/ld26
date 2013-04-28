@@ -22,6 +22,10 @@ Player = (I={}) ->
   5.times ->
     self.gainSeed()
 
+  inUniverse = (position) ->
+    if universe = engine.first("Universe")
+      position.distance(universe.position()) < universe.radius()
+
   canPlaceSeed = (position) ->
     engine.find("Seed").inject true, (free, seed) ->
       free and !(position.distance(seed.position()) < seed.radius())

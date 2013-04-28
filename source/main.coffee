@@ -10,12 +10,9 @@ window.engine = Engine
   canvas: canvas
   FPS: 60
 
-engine.add "Universe"
+window.night = Night()
 
-engine.add "Player",
-  x: App.width/2
-  y: App.height/2
-
+engine.setState Day()
 engine.start()
 
 # Music.play "seahorse"

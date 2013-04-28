@@ -110,9 +110,12 @@ Seed = (I={}) ->
     n = self.colorNum()
     switch n
       when 0
-        I.radius -= 3 * elapsedTime
+        if universe = engine.first("Universe")
+          I.radius -= 3 * elapsedTime
 
-        engine.first("Universe").expand(3 * elapsedTime)
+          universe.expand(3 * elapsedTime)
+        else
+          # Outside the universe
 
       when 1 # Red
         I.radius += 10 * elapsedTime
@@ -125,7 +128,7 @@ Seed = (I={}) ->
           3.times addPickup
           self.destroy()
       when 2 # Yellow
-        I.radius -= elapsedTime
+        ;
       when 3 # Orange
         ;
       when 4 # Blue
@@ -141,7 +144,7 @@ Seed = (I={}) ->
 
         I.radius -= 2 * elapsedTime
       when 7 # black
-        engine.first("Universe").expand(-elapsedTime)
+        engine.first("Universe")?.expand(-elapsedTime)
 
         I.radius -= elapsedTime
 
