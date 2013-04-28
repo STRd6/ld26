@@ -15,4 +15,6 @@ window.night = Night()
 engine.setState Day()
 engine.start()
 
-# Music.play "seahorse"
+Music.volume 0.25
+Music.play "music"
+

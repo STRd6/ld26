@@ -11,6 +11,9 @@ Seed = (I={}) ->
   I.n = Seed.Colors.indexOf(I.color)
 
   self = GameObject(I).extend
+    makeNoise: ->
+      Sound.play Seed.Sounds[self.colorNum()]
+
     colorNum: ->
       I.n
 
@@ -93,6 +96,8 @@ Seed = (I={}) ->
     self.I.radius -= 10
     other.I.radius -= 10
 
+    [other, self].rand().makeNoise()
+
   addPickup = ->
     p = Point.random().scale(50)
 
@@ -103,6 +108,8 @@ Seed = (I={}) ->
   darknessSpreads = (other, self) ->
     other.I.n = 7
     other.I.color = Seed.Colors.last()
+
+    other.makeNoise()
 
   self.on "update", (elapsedTime) ->
     return unless I.active
@@ -170,9 +177,26 @@ Seed = (I={}) ->
       radius: I.radius
       color: Seed.gradient(I.radius, I.color, canvas.context())
 
+  self.on "create", ->
+    self.makeNoise()
+
+  self.on "destroy", ->
+    self.makeNoise()
+
   self.attrReader "radius"
 
   return self
+
+Seed.Sounds = [
+  "a-4"
+  "c5"
+  "d5"
+  "f5"
+  "g4"
+  "g5"
+  "c4"
+  "d4"
+]
 
 Seed.ColorNums = [
   0b000
