@@ -291,6 +291,9 @@ Seed = function(I) {
   });
   I.n = Seed.Colors.indexOf(I.color);
   self = GameObject(I).extend({
+    makeNoise: function() {
+      return Sound.play(Seed.Sounds[self.colorNum()]);
+    },
     colorNum: function() {
       return I.n;
     },
@@ -376,7 +379,8 @@ Seed = function(I) {
   };
   antagonism = function(other, self) {
     self.I.radius -= 10;
-    return other.I.radius -= 10;
+    other.I.radius -= 10;
+    return [other, self].rand().makeNoise();
   };
   addPickup = function() {
     var p;
@@ -389,7 +393,8 @@ Seed = function(I) {
   };
   darknessSpreads = function(other, self) {
     other.I.n = 7;
-    return other.I.color = Seed.Colors.last();
+    other.I.color = Seed.Colors.last();
+    return other.makeNoise();
   };
   self.on("update", function(elapsedTime) {
     var n, universe, _ref;
@@ -462,9 +467,17 @@ Seed = function(I) {
       color: Seed.gradient(I.radius, I.color, canvas.context())
     });
   });
+  self.on("create", function() {
+    return self.makeNoise();
+  });
+  self.on("destroy", function() {
+    return self.makeNoise();
+  });
   self.attrReader("radius");
   return self;
 };
+
+Seed.Sounds = ["a-4", "c5", "d5", "f5", "g4", "g5", "c4", "d4"];
 
 Seed.ColorNums = [0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7];
 
@@ -501,6 +514,208 @@ Seed.gradient = function(radius, color, context) {
   radgrad.addColorStop(1, "rgba(" + r + ", " + g + ", " + b + ", " + edgeAlpha + ")");
   return radgrad;
 };
+Music = (function() {
+  var globalMusicVolume, track, trackVolume, updateTrackVolume;
+  globalMusicVolume = 1;
+  trackVolume = 1;
+  track = $("<audio />", {
+    loop: "loop"
+  }).appendTo('body').get(0);
+  updateTrackVolume = function() {
+    return track.volume = globalMusicVolume * trackVolume;
+  };
+  return {
+    /**
+    Set the global volume modifier for all music.
+
+    Any value set is clamped between 0 and 1. This is multiplied
+    into each individual track that plays.
+
+    If no argument is given return the current global music volume.
+
+    @name globalVolume
+    @methodOf Music
+    @param {Number} [newVolume] The volume to set
+    */
+    globalVolume: function(newVolume) {
+      if (newVolume != null) {
+        globalMusicVolume = newVolume.clamp(0, 1);
+        updateTrackVolume();
+      }
+      return globalMusicVolume;
+    },
+    /**
+    Plays a music track.
+
+    @name play
+    @methodOf Music
+    @param {String} name The name of the track to play.
+    */
+    play: function(name) {
+      updateTrackVolume();
+
+      if(name) {
+        track.src = "" + BASE_URL + "/music/" + name + ".ogg";
+      }
+
+      return track.play();
+    },
+
+    pause: function() {
+      track.pause();
+    },
+    /**
+    Get or set the current music volume. Any value passed is
+    clamped between 0 and 1. Use this to adjust the volume of
+    individual tracks or to increase or decrease volume during
+    gameplay.
+
+    @name volume
+    @methodOf Music
+    @param {Number} [newVolume] The volume to set to.
+    */
+    volume: function(newVolume) {
+      if (newVolume != null) {
+        trackVolume = newVolume.clamp(0, 1);
+        updateTrackVolume();
+        return this;
+      } else {
+        return trackVolume;
+      }
+    }
+  };
+})();
+
+(function($) {
+  /**
+  A simple interface for playing sounds in games.
+
+  @name Sound
+  @namespace
+  */
+  var Sound, directory, format, globalVolume, loadSoundChannel, sounds, _ref;
+  directory = (typeof App !== "undefined" && App !== null ? (_ref = App.directories) != null ? _ref.sounds : void 0 : void 0) || "sounds";
+  format = "wav";
+  sounds = {};
+  globalVolume = 1;
+  loadSoundChannel = function(name) {
+    var sound, url;
+    url = "" + BASE_URL + "/" + directory + "/" + name + "." + format;
+    return sound = $('<audio />', {
+      autobuffer: true,
+      preload: 'auto',
+      src: url
+    }).get(0);
+  };
+  Sound = function(id, maxChannels) {
+    return {
+      play: function() {
+        return Sound.play(id, maxChannels);
+      },
+      stop: function() {
+        return Sound.stop(id);
+      }
+    };
+  };
+  return Object.extend(Sound, {
+    /**
+    Set the global volume modifier for all sound effects.
+
+    Any value set is clamped between 0 and 1. This is multiplied
+    into each individual effect that plays.
+
+    If no argument is given return the current global sound effect volume.
+
+    @name globalVolume
+    @methodOf Sound
+    @param {Number} [newVolume] The volume to set
+    */
+    globalVolume: function(newVolume) {
+      if (newVolume != null) globalVolume = newVolume.clamp(0, 1);
+      return globalVolume;
+    },
+    /**
+    Play a sound from your sounds
+    directory with the name of `id`.
+
+    <code><pre>
+    # plays a sound called explode from your sounds directory
+    Sound.play('explode')
+    </pre></code>
+
+    @name play
+    @methodOf Sound
+
+    @param {String} id id or name of the sound file to play
+    @param {String} maxChannels max number of sounds able to be played simultaneously
+    */
+    play: function(id, maxChannels) {
+      var channel, channels, freeChannels, sound;
+      maxChannels || (maxChannels = 4);
+      if (!sounds[id]) sounds[id] = [loadSoundChannel(id)];
+      channels = sounds[id];
+      freeChannels = $.grep(channels, function(sound) {
+        return sound.currentTime === sound.duration || sound.currentTime === 0;
+      });
+      if (channel = freeChannels.first()) {
+        try {
+          channel.currentTime = 0;
+        } catch (_error) {}
+        channel.volume = globalVolume;
+        return channel.play();
+      } else {
+        if (!maxChannels || channels.length < maxChannels) {
+          sound = loadSoundChannel(id);
+          channels.push(sound);
+          sound.play();
+          return sound.volume = globalVolume;
+        }
+      }
+    },
+    /**
+    Play a sound from the given
+    url with the name of `id`.
+
+    <code><pre>
+    # plays the sound at the specified url
+    Sound.playFromUrl('http://YourSoundWebsite.com/explode.wav')
+    </pre></code>
+
+    @name playFromUrl
+    @methodOf Sound
+
+    @param {String} url location of sound file to play
+
+    @returns {Sound} this sound object
+    */
+    playFromUrl: function(url) {
+      var sound;
+      sound = $('<audio />').get(0);
+      sound.src = url;
+      sound.play();
+      sound.volume = globalVolume;
+      return sound;
+    },
+    /**
+    Stop a sound while it is playing.
+
+    <code><pre>
+    # stops the sound 'explode' from
+    # playing if it is currently playing
+    Sound.stop('explode')
+    </pre></code>
+
+    @name stop
+    @methodOf Sound
+
+    @param {String} id id or name of sound to stop playing.
+    */
+    stop: function(id) {
+      var _ref2;
+      return (_ref2 = sounds[id]) != null ? _ref2.stop() : void 0;
+    }
+  }, (typeof exports !== "undefined" && exports !== null ? exports : this)["Sound"] = Sound);
+})(jQuery);
 var Universe;
 
 Universe = function(I) {
@@ -592,3 +807,7 @@ window.night = Night();
 engine.setState(Day());
 
 engine.start();
+
+Music.volume(0.25);
+
+Music.play("music");
